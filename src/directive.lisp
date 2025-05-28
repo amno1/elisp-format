@@ -1,9 +1,7 @@
 (in-package #:elisp-format)
 
 (defclass elisp-directive (invistra::directive)
-  ((client
-    :initarg :client :accessor directive-client)
-   (argument
+  ((argument
     :initarg :argument :accessor directive-argument)
    (consume-argument
     :initarg :consume-argument :initform nil :accessor consume-argument-p)
@@ -33,19 +31,6 @@
       (parse-integer string :start position :junk-allowed t)
       (values (aref string position) (1+ position))))
 
-(defclass literal-directive (directive) ())
-
-(defmethod specialize-directive
-    (client (char (eql nil)) (directive literal-directive) end-directive)
-  (declare (ignore client char end-directive))
-  ;; just a pass through
-  directive)
-
-(defmethod interpret-item (client (item literal-directive) &optional args)
-  (declare (ignore client args))
-  (loop for c across (directive-argument item)
-        do (write-char c *destination*)))
-
 (defmethod parse-directive (control-string start)
   (let* ((end (length control-string))
          (last (array-last control-string))
@@ -64,7 +49,7 @@
                ((and (eql token #\#))
                 (setf (argument-prefix directive) t))
                ((eql token #\+)
-                (unless (eql last #\c)
+                (unless (or (eql last #\s) (eql last #\c))
                   (setf (print-sign-p directive) t
                         (sign-char directive) #\+)))
                ((eql token #\-)

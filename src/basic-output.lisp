@@ -102,16 +102,14 @@ The value of an argument itself is printed to a string in
       (setf (directive-argument directive) (code-char char)))
     `((print-arg ,directive *destination*))))
 
-(defclass elisp-general-directive (elisp-directive) ())
-
-(defclass |s-elisp-directive| (elisp-general-directive) ())
+(defclass |s-directive| (elisp-directive) ())
 
 (defmethod specialize-directive
     (client (char (eql #\s)) directive end-directive)
   (declare (ignore client end-directive))
-  (change-class directive '|s-elisp-directive| :pretty-print t))
+  (change-class directive '|s-directive| :pretty-print t :parameters nil))
 
-(defmethod interpret-item (client (directive |s-elisp-directive|) &optional args)
+(defmethod interpret-item (client (directive |s-directive|) &optional args)
   (declare (ignore args))
   (let ((arg (directive-argument directive)))
     (typecase arg
@@ -119,14 +117,14 @@ The value of an argument itself is printed to a string in
        (setf (directive-argument directive) (char-code arg)))))
   (print-arg directive *destination*))
 
-(defclass |S-elisp-directive| (elisp-general-directive) ())
+(defclass |S-directive| (elisp-directive) ())
 
 (defmethod specialize-directive
     (client (char (eql #\S)) directive end-directive)
   (declare (ignore client end-directive))
-  (change-class directive '|S-elisp-directive|))
+  (change-class directive '|S-directive| :parameters nil))
 
-(defmethod interpret-item (client (directive |S-elisp-directive|) &optional args)
+(defmethod interpret-item (client (directive |S-directive|) &optional args)
   (declare (ignore args))
   (let ((arg (directive-argument directive)))
     (when (characterp arg)

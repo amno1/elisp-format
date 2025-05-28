@@ -48,7 +48,7 @@
               (*print-escape* nil)
               (*print-readably* nil))
           (write value :stream *destination*))
-        (let ((client (directive-client directive))
+        (let ((client *client*)
               (value (ensure-float value)))
           (multiple-value-bind (significand exponent sign)
               (quaviver:float-triple client 10 value)
@@ -184,9 +184,9 @@
 
 (defmethod specialize-directive
     (client (char (eql #\f)) directive end-directive)
-  (declare (ignore end-directive))
+  (declare (ignore client end-directive))
   (change-class
-   directive 'f-directive :client client :parameters nil
+   directive 'f-directive :parameters nil
    :overflow-char (when (pad-right-p directive) (argument-padchar directive))))
 
 (defmethod interpret-item (client (directive f-directive) &optional parameters)
@@ -207,7 +207,7 @@
 
 (defmethod specialize-directive
     (client (char (eql #\e)) directive (end-directive t))
-  (change-class directive 'e-directive :client client :parameters nil))
+  (change-class directive 'e-directive :parameters nil))
 
 (defmethod argument-to-string ((directive e-directive))
   (with-output-to-string (s)
@@ -367,7 +367,6 @@
                            :k k
                            :e dp
                            :precision p
-                           :client client
                            :parameters nil))
             (t
              (cond ((= dp 0)
@@ -384,5 +383,4 @@
                    (change-class directive 'e-directive
                                  :argument vv
                                  :precision p
-                                 :client client
                                  :parameters nil))))))))))
