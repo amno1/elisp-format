@@ -1,7 +1,7 @@
 ;;; Floating-point printers
 
-;; Parts of code in this file are adapted directly from Invistra:
-;; Copyright © 2010-2023 Robert Strandh, Tarn W. Burton
+;; Parts of the code in this file are adapted directly from Invistra:
+;; Copyright 2010-2023 Robert Strandh, Tarn W. Burton
 ;; For the details see the license file in the project directory
 
 (in-package #:elisp-format)
@@ -79,7 +79,7 @@
         q)))
 
 (defun trim-fractional (significand digit-count fractional-position d)
-  (declare (type fixnum significand))
+  (declare (type integer significand))
   (let ((l (max 0 (- digit-count fractional-position))))
     (cond ((< l d)
            (if (zerop significand)
@@ -113,14 +113,14 @@
 (defun print-fixed-arg (value significand exponent
                         w d k e overflowchar exponentchar trailing-dot)
   (declare (ignore e exponentchar)
-           (type fixnum significand))
+           (type integer significand))
   (let* ((digit-count (quaviver.math:count-digits 10 significand))
          (fractional-position (if (zerop significand)
                                   0
                                   (+ digit-count k exponent)))
          (leading-zeros 0)
          (my-significand significand))
-    (declare (type fixnum my-significand))
+    (declare (type integer my-significand))
     (flet ((compute-width ()
              (+ 1
                 leading-zeros
@@ -220,7 +220,7 @@
 
 (defun print-exponent-arg (value significand exponent
                            w d e k overflowchar exponentchar trailing-dot)
-  (declare (type fixnum significand))
+  (declare (type integer significand))
   (let* ((digit-count (quaviver.math:count-digits 10 significand))
          (fractional-position k)
          (leading-zeros 0)
@@ -228,7 +228,7 @@
          (my-exponent (if (zerop significand)
                           0
                           (+ exponent digit-count (- k)))))
-    (declare (type fixnum my-exponent))
+    (declare (type integer my-exponent))
     (let* ((exp-count (quaviver.math:count-digits 10 (abs my-exponent)))
            (leading-exp-zeros (1+ (- (or e exp-count) exp-count))))
       (when (= leading-exp-zeros 0) (incf leading-exp-zeros))
@@ -324,7 +324,7 @@
          (p (argument-precision directive)))
     (multiple-value-bind (significand dp sign)
         (quaviver:float-triple client 10 (coerce v 'float))
-      (declare (type fixnum significand)
+      (declare (type integer significand)
                (ignore sign))
       (let ((dc (quaviver.math:count-digits 10 significand)))
         (when (and (integerp v) (<= dc p))
