@@ -115,5 +115,3 @@
            ;; We found a tilde in the start position, so we have
            ;; a directive.
            (parse-directive control-string (1+ start))))))
-
-;;; elisp-directive.lisp ends here

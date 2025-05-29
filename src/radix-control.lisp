@@ -1,6 +1,8 @@
-;; this file has some code adapted directly from Invistra:
-;; Copyright © 2010-2023 Robert Strandh, Tarn W. Burton
+;; integer printers
 
+;; Parts of code in this file are adapted directly from Invistra:
+;; Copyright © 2010-2023 Robert Strandh, Tarn W. Burton
+;; For the details see the license file in the project directory
 
 (in-package #:elisp-format)
 
