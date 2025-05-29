@@ -1,3 +1,7 @@
+;; this file has some code adapted directly from Invistra:
+;; Copyright © 2010-2023 Robert Strandh, Tarn W. Burton
+
+
 (in-package #:elisp-format)
 
 (defclass elisp-radix-directive (elisp-directive)
