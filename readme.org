@@ -8,22 +8,22 @@ This wouldn't be possible without [[https://github.com/s-expressionists/Invistra
 
 * Usage
 
-While, this is not meant for public usage, I need it as a part of another project, it is possible to use as a standalone library, but you will need to download Invistra, and load custom-parser branch yourself, since it is not in quicklisp.
+While, this is not meant for public usage, I need it as a part of another project, it is possible to use this as a standalone library. You will need to download Invistra, and load custom-parser branch yourself.
 
 Once you have that in your image, clone this repo and load elisp-format-extrinsic system into your lisp (in elisp-format.asd).
 
-In Emacs Lisp, they use double float precision, so it is necessary to ensure that \*read-default-float-format\* is set to 'double-float. In SBCL, and as I haver read on StackOverflow, special variables are thread local variables, so one has to either set it when process starts, or explicitly in each thread. I personally load sbcl with:
+In Emacs Lisp, they use double float precision. It is necessary to ensure that *read-default-float-format* is set to 'double-float. In SBCL, and as I haver read on StackOverflow, special variables are thread local variables, so one has to either set it when process starts, or explicitly in each thread. I personally load sbcl with:
 
     sbcl --noinform --eval "(setq '*read-default-float-format 'double-float)"
 
 
-To run tests, load elisp-format-extrinsic-test system. I didn't automate tests, I have used them sort of for TDD, so I was running them from repl while coding this, for example:
+To run tests, load elisp-format-extrinsic-test system. I didn't automate tests, I have used them just for TDD, so I was running them from repl while coding this, for example:
 
     (parachute:test '|x-directive|)
 
 * Implementation notes
 
-This library uses a custom branch of Invistra named 'custom-parser' and is implemented as a client to that library. The very small parser for Emacs format is implemented in 'parse-directive' in directive.lisp. Directive printing follows similar pattern as seen in Invistra itself, and even copies most of their code with modifications needed to mirro the Emacs format output. Not much to say about it, just follow the code.
+This library uses a custom branch of Invistra named 'custom-parser' and is implemented as a client to that library. The very small parser for Emacs format is implemented in 'parse-directive' in directive.lisp. Directive printing follows similar pattern as seen in Invistra itself, and even copies most of their code where possible, with some modifications where needed.
 
 * Problems and bugs
 
@@ -39,11 +39,7 @@ Formatter (compiling formatting strings) is not done. Something I haven't looked
 
 * Possible improvements
 
-A relatively easy thing is to add a 'b-directive', a directive to render binary numbers. Common Lisp have one, but Emacs Lisp does not have one. I have started it, but it is commented out for now.
-
-Bit more work and experimentation would be to ensure that each directive renders to its own string, and that the original string is treated read only. That way one could perhaps use lparallel, to render each directive in its own thread, and than combine those strings into a final result. Due to threading overhead, that require some benchmark to find a cut of when the extra overhead is bigger than the actual work. I don't have time or interest to experiment with it either, but it would nice if someone would like to experiment with this.
-
-Finally, it would be possible to shave off quite a bit of CPU cycles by not insisting on 1:1 output compared to Emacs Lisp format. For example, the undocumented features are that precision affects output even in directives where it is not mentioned. For example all integer directives are rendered with sprintf under the hood, which means [[https://cplusplus.com/reference/cstdio/printf/][the rules of printf apply]]. Especially interesting effect is given when octal base is rendered with precision 0 for value 0 with a prefix flag:
+It would be possible to shave off quite a bit of CPU cycles by not insisting on 1:1 output compared to Emacs Lisp format. For example, the undocumented features are that precision affects output even in directives where it is not mentioned. For example all integer directives are rendered with sprintf under the hood, which means [[https://cplusplus.com/reference/cstdio/printf/][the rules of printf apply]]. Especially interesting effect is given when octal base is rendered with precision 0 for value 0 with a prefix flag:
 
 #+begin_src emacs-lisp
 ELISP> (format "%#.d" 0)
@@ -68,11 +64,13 @@ I am a bit divided if that actually is important to render the same, but for now
 
 * Discussion
 
-This was more complicated than I really estimated it to be. Emacs format function, seem to be very similar, but less powerful than Common Lisp format function, under the hood, the things are different. My first plan was, of course, to just parse the control string, reformat it as need be, and than pass the formatted controll string to Common Lisp. There is even a library, printfcl, that does exactly that. Since Emacs format specifiers are more like to C printf, than to CL format, it is possible to use that library almost as-is. Actually, Elisp format function is basicaly a simplified front-end to printf.
+This was more complicated than I really estimated it to be. Emacs format function, seem to be very similar, but less powerful than Common Lisp format function, but under the hood, the things are different. My first plan was, of course, to just parse the control string, reformat it as need be, and than pass the formatted controll string to Common Lisp format function for printing. There are libraries, for example [[https://github.com/splittist/printfcl][printfcl]] or [[https://github.com/dlowe-net/printf/][this one]] that does exactly that. Since Emacs format specifiers are more like C printf, than as in CL format, it is possible to use that library almost as-is.
 
-Matching the output of Emacs format, 1:1, turned to be harder than expected. It turns it takes a certain amount of work to translate from Emacs to Common Lisp format, so I questionoed if it is worth to do it at all. Once, we have parsed the control string, we can just render it instead of generating another controll string and passing it in Common Lisp format for another round of parsing. I also need to implement format-time-string function, which is also implemented in C core and is also similar in the nature and uses similar formatting, printf-like, idiom.
+It takes a certain amount of work to translate from Emacs to Common Lisp format, so I questionoed if it is worh to implement on the top of cl:format. Once, we have parsed the control string, we can just render it instead of generating another controll string and passing it in Common Lisp format for another round of parsing. Rendering floating point number is certainly not a trivial task. But there is SICL project, which aims to be a standalone Common Lisp compiler, implemented in Common Lisp itself.
 
-I was aware of SICL project, which aims to be a standalone Common Lisp compiler, implemnted in Common Lisp itself. They have an implementation of format function, called Invistra, which to me seemed well written and easy to modify. However, it is a pure, hardcoded Common Lisp format, and not a re-usable library or a framework per se. However, it wasn't too difficult to turn it into a small framework, and the author, Tom Burton, helped by refactoring a part out in a separate branch, which was very nice from him. The bulk of the work is not actually parsing the control string, that is a small part of the work, but rendering data, mostly floating point numbers and scientific (exponential) notation.
+They have an implementation of cl:format function, called Invistra, which to me seemed well written and easy to modify. This minor problem is, it is a pure, hardcoded Common Lisp format, and not a re-usable library or a framework per se.
+
+However, it wasn't too difficult to turn work with it, and the author, T. Burton, helped by refactoring a part out in a separate branch, which was very nice from him. The bulk of the work is not actually parsing the control string, that is a small part of the work, but rendering data, mostly floating point numbers and scientific (exponential) notation.
 
 I think I have managed to get 1:1, output. I have tried to test for the most
 possible and impossible flag combination. It is still possible that some combination of flags will produce a different result, in which case it is a bug. I am sure I haven't covered all the possible cases, but I have tried as much as possible though.
